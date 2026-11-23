@@ -10,7 +10,7 @@ from app.models import User, AudioFile
 import time
 from uuid import uuid4
 
-AUDIO_DIRECTORY = 'audio_storage'
+AUDIO_DIRECTORY = os.path.abspath('audio_storage')
 
 
 @app.route('/')
@@ -117,12 +117,10 @@ def crop():
             video_file.save(video_path)
 
             # Используйте moviepy для отрезки видео и сохранения аудио
-            video = VideoFileClip(video_path)
-            audio = video.audio.subclip(start_time, end_time)
-            
-            output_path = os.path.join(user_audio_directory, f'{unique_filename}.mp3')
-            audio.write_audiofile(output_path, codec='mp3', fps=44100)
-
+            with VideoFileClip(video_path) as video:
+                audio = video.audio.subclip(start_time, end_time)
+                output_path = os.path.join(user_audio_directory, f'{unique_filename}.mp3')
+                audio.write_audiofile(output_path, codec='mp3', fps=44100)            
             audio_file = AudioFile(filename=f'{unique_filename}.mp3', path=output_path, user=current_user)
             db.session.add(audio_file)
             db.session.commit()
